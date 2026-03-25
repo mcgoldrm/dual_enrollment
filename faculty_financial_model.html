@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dual Enrollment Financial Model — Montgomery College</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f7f6f3;
+    --surface: #ffffff;
+    --surface2: #f0ede8;
+    --border: rgba(0,0,0,0.09);
+    --border2: rgba(0,0,0,0.15);
+    --text: #1a1917;
+    --muted: #6b6860;
+    --faint: #9e9b96;
+    --accent: #1a4fa0;
+    --accent-bg: #e8eef9;
+    --green: #0a5c3e;
+    --green-bg: #e3f4ed;
+    --red: #8b2020;
+    --red-bg: #fbeaea;
+    --amber: #7a4800;
+    --amber-bg: #fdf0da;
+    --purple: #4a348a;
+    --purple-bg: #edeaf8;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --mono: 'DM Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1.25rem 2rem;
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+  }
+  header h1 {
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  header span {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 0;
+    min-height: calc(100vh - 60px);
+  }
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 1.5rem;
+    overflow-y: auto;
+  }
+  .main {
+    padding: 1.5rem;
+    overflow-y: auto;
+  }
+  .section-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin: 1.25rem 0 .75rem;
+  }
+  .section-label:first-child { margin-top: 0; }
+  .irow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: .6rem;
+  }
+  .irow label {
+    font-size: 12.5px;
+    color: var(--muted);
+    flex: 1;
+    min-width: 0;
+  }
+  .irow input[type=range] {
+    flex: 1;
+    min-width: 0;
+    accent-color: var(--accent);
+    height: 4px;
+    cursor: pointer;
+  }
+  .ival {
+    font-size: 12.5px;
+    font-weight: 500;
+    font-family: var(--mono);
+    color: var(--text);
+    min-width: 68px;
+    text-align: right;
+  }
+  hr { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+  .grid4 { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin-bottom: 1rem; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; margin-bottom: 1rem; }
+  .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+  .metric {
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    padding: .75rem 1rem;
+  }
+  .metric-label { font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+  .metric-value { font-size: 20px; font-weight: 500; font-family: var(--mono); letter-spacing: -.02em; }
+  .metric-sub { font-size: 11px; color: var(--faint); margin-top: 2px; font-family: var(--mono); }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: .875rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .badge {
+    font-size: 11px;
+    font-weight: 400;
+    padding: 2px 9px;
+    border-radius: 100px;
+  }
+  .b-ftf { background: var(--green-bg); color: var(--green); }
+  .b-ptf { background: var(--purple-bg); color: var(--purple); }
+  .b-mix { background: var(--amber-bg); color: var(--amber); }
+  .pos { color: var(--green); }
+  .neg { color: var(--red); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: left;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    font-size: 13px;
+  }
+  td.r { text-align: right; font-family: var(--mono); font-size: 12.5px; }
+  tr:last-child td { border-bottom: none; font-weight: 500; }
+  tbody tr:hover td { background: var(--surface2); }
+  .info-bar {
+    font-size: 12px;
+    color: var(--muted);
+    padding: .5rem 0 0;
+    font-family: var(--mono);
+  }
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+    .grid4 { grid-template-columns: repeat(2, 1fr); }
+    .grid3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Dual Enrollment Financial Model</h1>
+  <span>Montgomery College &mdash; Program Revenue &amp; Cost Analysis</span>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+
+    <div class="section-label">Enrollment parameters</div>
+    <div class="irow"><label>Total students enrolled</label><input type="number" id="s_students" min="1" max="99999" step="1" value="100" style="width:90px;padding:4px 8px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-family:var(--mono);font-size:13px;background:var(--surface);color:var(--text)"><span class="ival" id="o_students" style="display:none">100</span></div>
+    <div class="irow"><label>Avg credits per student</label><input type="range" id="s_credits" min="1" max="15" step="0.5" value="7"><span class="ival" id="o_credits">7.0</span></div>
+    <div class="irow"><label>Avg class size</label><input type="range" id="s_classsize" min="5" max="40" step="1" value="16"><span class="ival" id="o_classsize">16</span></div>
+    <div class="irow"><label>FTF % in mixed scenario</label><input type="range" id="s_ftfpct" min="0" max="100" step="5" value="50"><span class="ival" id="o_ftfpct">50%</span></div>
+
+    <hr>
+    <div class="section-label">Tuition &amp; fee rates</div>
+    <div class="irow"><label>Base tuition rate (per credit hr)</label><span class="ival">$138.00</span></div>
+    <div class="irow"><label>Tuition subsidy %</label><input type="range" id="s_subsidy" min="0" max="100" step="1" value="75"><span class="ival" id="o_subsidy">75%</span></div>
+    <div class="irow"><label style="color:var(--text)">Effective tuition rate</label><span class="ival" id="o_tuit" style="color:var(--accent)">$103.50</span></div>
+    <div class="irow"><label>Consolidated fee &mdash; 1 credit</label><input type="range" id="s_cf1" min="20" max="150" step="1" value="50"><span class="ival" id="o_cf1">$50</span></div>
+    <div class="irow"><label>Consolidated fee &mdash; &gt;1 credit (%)</label><input type="range" id="s_cfp" min="5" max="40" step="1" value="20"><span class="ival" id="o_cfp">20%</span></div>
+    <div class="irow"><label>Facility/tech/trans (per credit hr)</label><input type="range" id="s_ftt" min="0" max="60" step="0.5" value="19"><span class="ival" id="o_ftt">$19.00</span></div>
+    <div style="border-top:1px solid var(--border);margin-top:.4rem;padding-top:.4rem">
+      <div class="irow"><label style="color:var(--text);font-weight:500">Total per student</label><span class="ival" id="o_rev_ps" style="color:var(--accent)">—</span></div>
+      <div class="irow" style="margin-bottom:0"><label style="font-size:11.5px">Tuition + fees breakdown</label><span id="o_rev_breakdown" style="font-size:11px;font-family:var(--mono);color:var(--muted);text-align:right;min-width:68px">—</span></div>
+    </div>
+
+    <hr>
+    <div class="section-label">Faculty compensation</div>
+    <div class="irow"><label>FTF rate (per credit hr)</label><input type="range" id="s_ftfr" min="1000" max="8000" step="50" value="3602"><span class="ival" id="o_ftfr">$3,602</span></div>
+    <div class="irow"><label>FTF load (credit hrs/semester)</label><input type="range" id="s_ftfl" min="9" max="21" step="1" value="15"><span class="ival" id="o_ftfl">15</span></div>
+    <div class="irow"><label>PTF rate (per credit hr)</label><input type="range" id="s_ptfr" min="500" max="5000" step="50" value="1745"><span class="ival" id="o_ptfr">$1,745</span></div>
+    <div class="irow"><label>PTF max load (credit hrs/semester)</label><input type="range" id="s_ptfl" min="3" max="15" step="1" value="11"><span class="ival" id="o_ptfl">11</span></div>
+
+    <hr>
+    <div class="section-label">Methodology notes</div>
+    <p style="font-size:12px;color:var(--muted);line-height:1.6">
+      Sections = &lceil;students &divide; class&nbsp;size&rceil;. Section-credit hours (SCH) = sections &times; avg credits. Faculty needed = &lceil;SCH &divide; load&rceil;, rounded up. Consolidated fee applies the higher of the flat $50 or the % rate when credits &gt; 1.    </p>
+
+  </aside>
+
+  <main class="main">
+
+    <div style="font-size:11px;color:var(--faint);font-family:var(--mono);margin-bottom:1rem" id="summary-bar"></div>
+
+    <div style="font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:.75rem">Revenue summary</div>
+    <div class="grid4" id="rev-metrics"></div>
+
+    <div style="font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:.75rem">Faculty cost scenarios</div>
+    <div class="grid3" id="scenarios"></div>
+
+    <div style="font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:.75rem">Detail table</div>
+    <div class="card" style="overflow-x:auto"><table id="detail-table">
+      <thead><tr><th>Item</th><th>FTF only</th><th>PTF only</th><th>Mixed</th></tr></thead>
+      <tbody id="detail-body"></tbody>
+    </table></div>
+
+  </main>
+</div>
+
+<script>
+function ge(id){return document.getElementById(id)}
+function fmt$(n){return '$'+Math.round(n).toLocaleString('en-US')}
+function fmtd(n){return '$'+Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',')}
+function fmtN(n){return Math.round(n).toLocaleString('en-US')}
+function fmtP(n){return n.toFixed(1)+'%'}
+function nc(v){return v>=0?'pos':'neg'}
+
+var BASE_TUIT=138;
+
+var sliders=[
+  ['s_students',null,function(v){return fmtN(v)}],
+  ['s_credits','o_credits',function(v){return Number(v).toFixed(1)}],
+  ['s_classsize','o_classsize',function(v){return fmtN(v)}],
+  ['s_ftfpct','o_ftfpct',function(v){return v+'%'}],
+  ['s_subsidy','o_subsidy',function(v){return v+'%'}],
+  ['s_cf1','o_cf1',function(v){return '$'+fmtN(v)}],
+  ['s_cfp','o_cfp',function(v){return v+'%'}],
+  ['s_ftt','o_ftt',function(v){return fmtd(v)}],
+  ['s_ftfr','o_ftfr',function(v){return fmt$(v)}],
+  ['s_ftfl','o_ftfl',function(v){return fmtN(v)}],
+  ['s_ptfr','o_ptfr',function(v){return fmt$(v)}],
+  ['s_ptfl','o_ptfl',function(v){return fmtN(v)}],
+];
+
+sliders.forEach(function(s){
+  var sl=ge(s[0]),out=s[1]?ge(s[1]):null,fn=s[2];
+  sl.addEventListener('input',function(){if(out)out.textContent=fn(sl.value);calc()});
+});
+
+function calc(){
+  var students=+ge('s_students').value;
+  var credits=+ge('s_credits').value;
+  var classsize=+ge('s_classsize').value;
+  var ftfpct=+ge('s_ftfpct').value/100;
+  var subsidy=+ge('s_subsidy').value/100;
+  var tuit=BASE_TUIT*subsidy;
+  ge('o_tuit').textContent=fmtd(tuit);
+  var cf1=+ge('s_cf1').value;
+  var cfp=+ge('s_cfp').value/100;
+  var ftt=+ge('s_ftt').value;
+  var ftfr=+ge('s_ftfr').value;
+  var ftfl=+ge('s_ftfl').value;
+  var ptfr=+ge('s_ptfr').value;
+  var ptfl=+ge('s_ptfl').value;
+
+  var tuit_ps=tuit*credits;
+  var full_tuit_ps=BASE_TUIT*credits;
+  var cf_ps=credits<=1?cf1:Math.max(cf1,cfp*full_tuit_ps);
+  var ftt_ps=ftt*credits;
+  var rev_ps=tuit_ps+cf_ps+ftt_ps;
+  var tot_rev=rev_ps*students;
+
+  ge('o_rev_ps').textContent=fmtd(rev_ps);
+  ge('o_rev_breakdown').textContent=fmtd(tuit_ps)+' + '+fmtd(cf_ps+ftt_ps);
+
+  var sections=Math.ceil(students/classsize);
+  var total_sch=sections*credits;
+
+  var ftf_cost_ea=ftfr*ftfl;
+  var ptf_cost_ea=ptfr*ptfl;
+
+  var ftf1=Math.ceil(total_sch/ftfl);
+  var cost1=ftf1*ftf_cost_ea;
+  var net1=tot_rev-cost1;
+
+  var ptf2=Math.ceil(total_sch/ptfl);
+  var cost2=ptf2*ptf_cost_ea;
+  var net2=tot_rev-cost2;
+
+  var sch_f=total_sch*ftfpct;
+  var sch_p=total_sch*(1-ftfpct);
+  var ftf3=ftfpct>0?Math.ceil(sch_f/ftfl):0;
+  var ptf3=(1-ftfpct)>0?Math.ceil(sch_p/ptfl):0;
+  var cost3=ftf3*ftf_cost_ea+ptf3*ptf_cost_ea;
+  var net3=tot_rev-cost3;
+
+  ge('summary-bar').textContent=fmtN(students)+' students · '+credits.toFixed(1)+' avg credits · '+fmtN(sections)+' sections · '+fmtN(total_sch)+' section-credit hours';
+
+  ge('rev-metrics').innerHTML=
+    metric('Tuition revenue',fmt$(tuit_ps*students),fmtd(tuit_ps)+'/student')
+    +metric('Consolidated fee',fmt$(cf_ps*students),fmtd(cf_ps)+'/student')
+    +metric('Facility/tech/trans',fmt$(ftt_ps*students),fmtd(ftt_ps)+'/student')
+    +metric('Total revenue',fmt$(tot_rev),fmtd(rev_ps)+'/student');
+
+  function metric(label,val,sub){
+    return '<div class="metric"><div class="metric-label">'+label+'</div><div class="metric-value">'+val+'</div><div class="metric-sub">'+sub+'</div></div>';
+  }
+
+  function scenCard(title,bclass,blabel,cost,net,f,p){
+    var mp=tot_rev>0?(net/tot_rev*100):0;
+    var detail='';
+    if(f>0) detail+='<div style="font-size:12px;color:var(--muted);margin-top:2px">'+fmtN(f)+' FTF &times; '+fmt$(ftf_cost_ea)+'</div>';
+    if(p>0) detail+='<div style="font-size:12px;color:var(--muted);margin-top:2px">'+fmtN(p)+' PTF &times; '+fmt$(ptf_cost_ea)+'</div>';
+    return '<div class="card" style="margin-bottom:0">'
+      +'<div class="card-title">'+title+'<span class="badge '+bclass+'">'+blabel+'</span></div>'
+      +'<div class="grid2" style="margin-bottom:.75rem">'
+      +'<div class="metric"><div class="metric-label">Faculty cost</div><div class="metric-value">'+fmt$(cost)+'</div><div class="metric-sub">'+fmt$(cost/students)+'/student</div></div>'
+      +'<div class="metric"><div class="metric-label">Net revenue</div><div class="metric-value '+nc(net)+'">'+fmt$(net)+'</div><div class="metric-sub">Margin: '+fmtP(mp)+'</div></div>'
+      +'</div>'+detail+'</div>';
+  }
+
+  var mixLabel=Math.round(ftfpct*100)+'% FTF / '+Math.round((1-ftfpct)*100)+'% PTF';
+  ge('scenarios').innerHTML=
+    scenCard('Scenario 1','b-ftf','FTF only',cost1,net1,ftf1,0)
+    +scenCard('Scenario 2','b-ptf','PTF only',cost2,net2,0,ptf2)
+    +scenCard('Scenario 3','b-mix',mixLabel,cost3,net3,ftf3,ptf3);
+
+  var rows=[
+    ['Sections needed',fmtN(sections),fmtN(sections),fmtN(sections)],
+    ['Section-credit hours',fmtN(total_sch),fmtN(total_sch),fmtN(total_sch)],
+    ['FTF required',fmtN(ftf1),'—',fmtN(ftf3)],
+    ['PTF required','—',fmtN(ptf2),fmtN(ptf3)],
+    ['FTF cost',fmt$(cost1),'—',fmt$(ftf3*ftf_cost_ea)],
+    ['PTF cost','—',fmt$(cost2),fmt$(ptf3*ptf_cost_ea)],
+    ['Total faculty cost',fmt$(cost1),fmt$(cost2),fmt$(cost3)],
+    ['Total revenue',fmt$(tot_rev),fmt$(tot_rev),fmt$(tot_rev)],
+    ['Net revenue',
+      '<span class="'+nc(net1)+'">'+fmt$(net1)+'</span>',
+      '<span class="'+nc(net2)+'">'+fmt$(net2)+'</span>',
+      '<span class="'+nc(net3)+'">'+fmt$(net3)+'</span>'],
+  ];
+
+  ge('detail-body').innerHTML=rows.map(function(r){
+    return '<tr><td>'+r[0]+'</td><td class="r">'+r[1]+'</td><td class="r">'+r[2]+'</td><td class="r">'+r[3]+'</td></tr>';
+  }).join('');
+}
+
+calc();
+</script>
+</body>
+</html>
