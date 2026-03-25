@@ -15,7 +15,7 @@
     --text: #1a1917;
     --muted: #6b6860;
     --faint: #9e9b96;
-    --accent: #1a4fa0;
+    --accent: #51237f;
     --accent-bg: #e8eef9;
     --green: #0a5c3e;
     --green-bg: #e3f4ed;
@@ -116,9 +116,9 @@
     border-radius: var(--radius-sm);
     padding: .75rem 1rem;
   }
-  .metric-label { font-size: 11px; color: var(--muted); margin-bottom: 3px; }
-  .metric-value { font-size: 20px; font-weight: 500; font-family: var(--mono); letter-spacing: -.02em; }
-  .metric-sub { font-size: 11px; color: var(--faint); margin-top: 2px; font-family: var(--mono); }
+  .metric-label { font-size: 11px; color: var(--muted); margin-bottom: 3px; text-align: center; }
+  .metric-value { font-size: 20px; font-weight: 500; font-family: var(--mono); letter-spacing: -.02em; text-align: center; }
+  .metric-sub { font-size: 11px; color: var(--faint); margin-top: 2px; font-family: var(--mono); text-align: center; }
   .card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -162,8 +162,8 @@
     color: var(--text);
     font-size: 13px;
   }
-  td.r { text-align: right; font-family: var(--mono); font-size: 12.5px; }
-  tr:last-child td { border-bottom: none; font-weight: 500; }
+  td.r { text-align: center; font-family: var(--mono); font-size: 12.5px; }
+  tr:last-child td { border-bottom: none; }
   tbody tr:hover td { background: var(--surface2); }
   .info-bar {
     font-size: 12px;
@@ -190,7 +190,7 @@
   <aside class="sidebar">
 
     <div class="section-label">Enrollment parameters</div>
-    <div class="irow"><label>Total students enrolled</label><input type="number" id="s_students" min="1" max="99999" step="1" value="100" style="width:90px;padding:4px 8px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-family:var(--mono);font-size:13px;background:var(--surface);color:var(--text)"><span class="ival" id="o_students" style="display:none">100</span></div>
+    <div class="irow"><label>Total students enrolled</label><input type="number" id="s_students" min="1" max="99999" step="1" value="2500" style="width:90px;padding:4px 8px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-family:var(--mono);font-size:13px;background:var(--surface);color:var(--text)"><span class="ival" id="o_students" style="display:none">100</span></div>
     <div class="irow"><label>Avg credits per student</label><input type="range" id="s_credits" min="1" max="15" step="0.5" value="7"><span class="ival" id="o_credits">7.0</span></div>
     <div class="irow"><label>Avg class size</label><input type="range" id="s_classsize" min="5" max="40" step="1" value="16"><span class="ival" id="o_classsize">16</span></div>
     <div class="irow"><label>FTF % in mixed scenario</label><input type="range" id="s_ftfpct" min="0" max="100" step="5" value="50"><span class="ival" id="o_ftfpct">50%</span></div>
@@ -227,14 +227,14 @@
     <div style="font-size:11px;color:var(--faint);font-family:var(--mono);margin-bottom:1rem" id="summary-bar"></div>
 
     <div style="font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:.75rem">Revenue summary</div>
-    <div class="grid4" id="rev-metrics"></div>
+    <div id="rev-metrics"></div>
 
     <div style="font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:.75rem">Faculty cost scenarios</div>
     <div class="grid3" id="scenarios"></div>
 
     <div style="font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:.75rem">Detail table</div>
     <div class="card" style="overflow-x:auto"><table id="detail-table">
-      <thead><tr><th>Item</th><th>FTF only</th><th>PTF only</th><th>Mixed</th></tr></thead>
+      <thead><tr><th>Item</th><th style="text-align:center">FTF only</th><th style="text-align:center">PTF only</th><th style="text-align:center">Mixed</th></tr></thead>
       <tbody id="detail-body"></tbody>
     </table></div>
 
@@ -293,6 +293,9 @@ function calc(){
   var ftt_ps=ftt*credits;
   var rev_ps=tuit_ps+cf_ps+ftt_ps;
   var tot_rev=rev_ps*students;
+  var full_rev_ps=full_tuit_ps+cf_ps+ftt_ps;
+  var full_tot_rev=full_rev_ps*students;
+  var subsidy_discount=full_tot_rev-tot_rev;
 
   ge('o_rev_ps').textContent=fmtd(rev_ps);
   ge('o_rev_breakdown').textContent=fmtd(tuit_ps)+' + '+fmtd(cf_ps+ftt_ps);
@@ -321,26 +324,36 @@ function calc(){
   ge('summary-bar').textContent=fmtN(students)+' students · '+credits.toFixed(1)+' avg credits · '+fmtN(sections)+' sections · '+fmtN(total_sch)+' section-credit hours';
 
   ge('rev-metrics').innerHTML=
-    metric('Tuition revenue',fmt$(tuit_ps*students),fmtd(tuit_ps)+'/student')
+    '<div class="grid3" style="margin-bottom:10px">'
+    +metric('Tuition revenue (subsidized)',fmt$(tuit_ps*students),fmtd(tuit_ps)+'/student')
     +metric('Consolidated fee',fmt$(cf_ps*students),fmtd(cf_ps)+'/student')
-    +metric('Facility/tech/trans',fmt$(ftt_ps*students),fmtd(ftt_ps)+'/student')
-    +metric('Total revenue',fmt$(tot_rev),fmtd(rev_ps)+'/student');
+    +metric('Facility / tech / trans',fmt$(ftt_ps*students),fmtd(ftt_ps)+'/student')
+    +'</div>'
+    +'<div class="grid2">'
+    +metric('Total billed to MCPS (w/ subsidy)',fmt$(tot_rev),fmtd(rev_ps)+'/student')
+    +metric('Full-rate potential (no subsidy)',fmt$(full_tot_rev),'Subsidy discount: '+fmt$(subsidy_discount))
+    +'</div>';
 
   function metric(label,val,sub){
     return '<div class="metric"><div class="metric-label">'+label+'</div><div class="metric-value">'+val+'</div><div class="metric-sub">'+sub+'</div></div>';
   }
 
   function scenCard(title,bclass,blabel,cost,net,f,p){
-    var mp=tot_rev>0?(net/tot_rev*100):0;
-    var detail='';
-    if(f>0) detail+='<div style="font-size:12px;color:var(--muted);margin-top:2px">'+fmtN(f)+' FTF &times; '+fmt$(ftf_cost_ea)+'</div>';
-    if(p>0) detail+='<div style="font-size:12px;color:var(--muted);margin-top:2px">'+fmtN(p)+' PTF &times; '+fmt$(ptf_cost_ea)+'</div>';
+    var mp=full_tot_rev>0?(net/full_tot_rev*100):0;
+    var staffing='';
+    if(f>0) staffing+='<span style="margin-right:10px">'+fmtN(f)+' FTF &times; '+fmt$(ftf_cost_ea)+'</span>';
+    if(p>0) staffing+='<span>'+fmtN(p)+' PTF &times; '+fmt$(ptf_cost_ea)+'</span>';
     return '<div class="card" style="margin-bottom:0">'
       +'<div class="card-title">'+title+'<span class="badge '+bclass+'">'+blabel+'</span></div>'
-      +'<div class="grid2" style="margin-bottom:.75rem">'
-      +'<div class="metric"><div class="metric-label">Faculty cost</div><div class="metric-value">'+fmt$(cost)+'</div><div class="metric-sub">'+fmt$(cost/students)+'/student</div></div>'
-      +'<div class="metric"><div class="metric-label">Net revenue</div><div class="metric-value '+nc(net)+'">'+fmt$(net)+'</div><div class="metric-sub">Margin: '+fmtP(mp)+'</div></div>'
-      +'</div>'+detail+'</div>';
+      +'<table style="width:100%;font-size:12.5px;border-collapse:collapse;margin-bottom:.5rem">'
+      +'<tr><td style="padding:3px 0;color:var(--muted)">Full-Rate Revenue</td><td style="text-align:right;font-family:var(--mono)">'+fmt$(full_tot_rev)+'</td></tr>'
+      +'<tr><td style="padding:3px 0;color:var(--muted)">Tuition Waiver</td><td style="text-align:right;font-family:var(--mono);color:var(--red)">&minus;'+fmt$(subsidy_discount)+'</td></tr>'
+      +'<tr><td style="padding:3px 0;color:var(--muted)">Faculty Cost</td><td style="text-align:right;font-family:var(--mono);color:var(--red)">&minus;'+fmt$(cost)+'</td></tr>'
+      +'<tr style="border-top:1px solid var(--border)"><td style="padding:4px 0 2px;font-weight:500">Net Revenue</td><td style="text-align:right;font-family:var(--mono);font-weight:500;padding:4px 0 2px" class="'+nc(net)+'">'+fmt$(net)+'</td></tr>'
+      +'<tr><td style="padding:0;color:var(--faint);font-size:11px">Margin on Full-Rate</td><td style="text-align:right;font-family:var(--mono);color:var(--faint);font-size:11px">'+fmtP(mp)+'</td></tr>'
+      +'</table>'
+      +(staffing?'<div style="font-size:11.5px;color:var(--muted)">'+staffing+'</div>':'')
+      +'</div>';
   }
 
   var mixLabel=Math.round(ftfpct*100)+'% FTF / '+Math.round((1-ftfpct)*100)+'% PTF';
@@ -349,23 +362,35 @@ function calc(){
     +scenCard('Scenario 2','b-ptf','PTF only',cost2,net2,0,ptf2)
     +scenCard('Scenario 3','b-mix',mixLabel,cost3,net3,ftf3,ptf3);
 
-  var rows=[
-    ['Sections needed',fmtN(sections),fmtN(sections),fmtN(sections)],
-    ['Section-credit hours',fmtN(total_sch),fmtN(total_sch),fmtN(total_sch)],
-    ['FTF required',fmtN(ftf1),'—',fmtN(ftf3)],
-    ['PTF required','—',fmtN(ptf2),fmtN(ptf3)],
-    ['FTF cost',fmt$(cost1),'—',fmt$(ftf3*ftf_cost_ea)],
-    ['PTF cost','—',fmt$(cost2),fmt$(ptf3*ptf_cost_ea)],
-    ['Total faculty cost',fmt$(cost1),fmt$(cost2),fmt$(cost3)],
-    ['Total revenue',fmt$(tot_rev),fmt$(tot_rev),fmt$(tot_rev)],
-    ['Net revenue',
-      '<span class="'+nc(net1)+'">'+fmt$(net1)+'</span>',
-      '<span class="'+nc(net2)+'">'+fmt$(net2)+'</span>',
-      '<span class="'+nc(net3)+'">'+fmt$(net3)+'</span>'],
+  var groups=[
+    {label:'Staffing', rows:[
+      ['Sections Needed',fmtN(sections),fmtN(sections),fmtN(sections)],
+      ['Section-Credit Hours',fmtN(total_sch),fmtN(total_sch),fmtN(total_sch)],
+      ['FTF Required',fmtN(ftf1),'—',fmtN(ftf3)],
+      ['PTF Required','—',fmtN(ptf2),fmtN(ptf3)],
+    ]},
+    {label:'Faculty Cost', rows:[
+      ['FTF Cost',fmt$(cost1),'—',fmt$(ftf3*ftf_cost_ea)],
+      ['PTF Cost','—',fmt$(cost2),fmt$(ptf3*ptf_cost_ea)],
+      ['Total Faculty Cost',fmt$(cost1),fmt$(cost2),fmt$(cost3)],
+    ]},
+    {label:'Revenue', rows:[
+      ['Full-Rate Revenue',fmt$(full_tot_rev),fmt$(full_tot_rev),fmt$(full_tot_rev)],
+      ['Tuition Waiver','<span class="neg">&minus;'+fmt$(subsidy_discount)+'</span>','<span class="neg">&minus;'+fmt$(subsidy_discount)+'</span>','<span class="neg">&minus;'+fmt$(subsidy_discount)+'</span>'],
+      ['Net Revenue',
+        '<span class="'+nc(net1)+'">'+fmt$(net1)+'</span>',
+        '<span class="'+nc(net2)+'">'+fmt$(net2)+'</span>',
+        '<span class="'+nc(net3)+'">'+fmt$(net3)+'</span>'],
+    ]},
   ];
 
-  ge('detail-body').innerHTML=rows.map(function(r){
-    return '<tr><td>'+r[0]+'</td><td class="r">'+r[1]+'</td><td class="r">'+r[2]+'</td><td class="r">'+r[3]+'</td></tr>';
+  var groupHeaderStyle='font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);background:var(--surface2);padding:5px 10px;';
+  ge('detail-body').innerHTML=groups.map(function(g){
+    var header='<tr><td style="'+groupHeaderStyle+'" colspan="4">'+g.label+'</td></tr>';
+    var rows=g.rows.map(function(r){
+      return '<tr><td>'+r[0]+'</td><td class="r">'+r[1]+'</td><td class="r">'+r[2]+'</td><td class="r">'+r[3]+'</td></tr>';
+    }).join('');
+    return header+rows;
   }).join('');
 }
 
@@ -373,3 +398,4 @@ calc();
 </script>
 </body>
 </html>
+
