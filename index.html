@@ -198,6 +198,7 @@
     <div class="irow"><label>Avg credits per student</label><input type="range" id="s_credits" min="1" max="15" step="0.5" value="7"><span class="ival" id="o_credits">7.0</span></div>
     <div class="irow"><label>Avg class size</label><input type="range" id="s_classsize" min="5" max="40" step="1" value="16"><span class="ival" id="o_classsize">16</span></div>
     <div class="irow"><label>FTF % in mixed scenario</label><input type="range" id="s_ftfpct" min="0" max="100" step="5" value="50"><span class="ival" id="o_ftfpct">50%</span></div>
+    <div class="irow"><label>MCPS-provided instructors</label><input type="range" id="s_mcps" min="0" max="200" step="1" value="0"><span class="ival" id="o_mcps">0</span></div>
 
     <hr>
     <div class="section-label">Tuition &amp; Fee Rates</div>
@@ -233,8 +234,20 @@
     <div style="font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:.75rem">Revenue Summary</div>
     <div id="rev-metrics"></div>
 
+    <div class="card" style="margin-bottom:1rem;display:none">
+      <div class="card-title">Revenue Waterfall</div>
+      <div style="position:relative;height:260px"><canvas id="waterfall-chart"></canvas></div>
+    </div>
+
     <div style="font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:.75rem">Faculty Cost Scenarios</div>
     <div class="grid3" id="scenarios"></div>
+
+    <div style="font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:.75rem">Net Revenue Sensitivity</div>
+    <div class="card" style="margin-bottom:1rem">
+      <div class="card-title">Net Revenue by Instructor Count</div>
+      <div style="position:relative;height:280px"><canvas id="sensitivity-chart"></canvas></div>
+      <div style="font-size:11px;color:var(--faint);margin-top:.625rem;font-family:var(--mono)">Dots mark required headcount for full section coverage &mdash; MCPS line assumes PTF staff remaining sections.</div>
+    </div>
 
     <div style="font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:.75rem">Detail Table</div>
     <div class="card" style="overflow-x:auto"><table id="detail-table">
@@ -245,6 +258,7 @@
   </main>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <script>
 function ge(id){return document.getElementById(id)}
 function fmt$(n){return '$'+Math.round(n).toLocaleString('en-US')}
@@ -254,6 +268,9 @@ function fmtP(n){return n.toFixed(1)+'%'}
 function nc(v){return v>=0?'pos':'neg'}
 
 var BASE_TUIT=138;
+var waterfallChart=null;
+var wfTtValues=[];
+var sensitivityChart=null;
 
 var sliders=[
   ['s_students',null,function(v){return fmtN(v)}],
@@ -264,6 +281,7 @@ var sliders=[
   ['s_cf1','o_cf1',function(v){return '$'+fmtN(v)}],
   ['s_cfp','o_cfp',function(v){return v+'%'}],
   ['s_ftt','o_ftt',function(v){return fmtd(v)}],
+  ['s_mcps','o_mcps',function(v){return fmtN(v)}],
   ['s_ftfr','o_ftfr',function(v){return fmt$(v)}],
   ['s_ftfl','o_ftfl',function(v){return fmtN(v)}],
   ['s_ptfr','o_ptfr',function(v){return fmt$(v)}],
@@ -307,25 +325,29 @@ function calc(){
   var sections=Math.ceil(students/classsize);
   var total_sch=sections*credits;
 
+  var mcps_instr=+ge('s_mcps').value;
+  var mcps_used=Math.min(mcps_instr,sections);
+  var mc_sch=Math.max(0,(sections-mcps_used)*credits);
+
   var ftf_cost_ea=ftfr*ftfl;
   var ptf_cost_ea=ptfr*ptfl;
 
-  var ftf1=Math.ceil(total_sch/ftfl);
+  var ftf1=mc_sch>0?Math.ceil(mc_sch/ftfl):0;
   var cost1=ftf1*ftf_cost_ea;
   var net1=tot_rev-cost1;
 
-  var ptf2=Math.ceil(total_sch/ptfl);
+  var ptf2=mc_sch>0?Math.ceil(mc_sch/ptfl):0;
   var cost2=ptf2*ptf_cost_ea;
   var net2=tot_rev-cost2;
 
-  var sch_f=total_sch*ftfpct;
-  var sch_p=total_sch*(1-ftfpct);
+  var sch_f=mc_sch*ftfpct;
+  var sch_p=mc_sch*(1-ftfpct);
   var ftf3=ftfpct>0?Math.ceil(sch_f/ftfl):0;
   var ptf3=(1-ftfpct)>0?Math.ceil(sch_p/ptfl):0;
   var cost3=ftf3*ftf_cost_ea+ptf3*ptf_cost_ea;
   var net3=tot_rev-cost3;
 
-  ge('summary-bar').textContent=fmtN(students)+' students · '+credits.toFixed(1)+' avg credits · '+fmtN(sections)+' sections · '+fmtN(total_sch)+' section-credit hours';
+  ge('summary-bar').textContent=fmtN(students)+' students · '+credits.toFixed(1)+' avg credits · '+fmtN(sections)+' sections · '+fmtN(total_sch)+' section-credit hours'+(mcps_used>0?' · '+fmtN(mcps_used)+' MCPS-staffed':'');
 
   ge('rev-metrics').innerHTML=
     '<div class="grid2" style="margin-bottom:10px">'
@@ -345,6 +367,7 @@ function calc(){
   function scenCard(title,bclass,blabel,cost,net,f,p){
     var mp=full_tot_rev>0?(net/full_tot_rev*100):0;
     var staffing='';
+    if(mcps_used>0) staffing+='<span style="margin-right:10px;color:var(--accent)">'+fmtN(mcps_used)+' MCPS</span>';
     if(f>0) staffing+='<span style="margin-right:10px">'+fmtN(f)+' FTF &times; '+fmt$(ftf_cost_ea)+'</span>';
     if(p>0) staffing+='<span>'+fmtN(p)+' PTF &times; '+fmt$(ptf_cost_ea)+'</span>';
     return '<div class="card" style="margin-bottom:0">'
@@ -368,8 +391,10 @@ function calc(){
 
   var groups=[
     {label:'Staffing', rows:[
-      ['Sections Needed',fmtN(sections),fmtN(sections),fmtN(sections)],
-      ['Section-Credit Hours',fmtN(total_sch),fmtN(total_sch),fmtN(total_sch)],
+      ['Total Sections',fmtN(sections),fmtN(sections),fmtN(sections)],
+      ['MCPS Instructors',fmtN(mcps_used),fmtN(mcps_used),fmtN(mcps_used)],
+      ['MC-Staffed Sections',fmtN(sections-mcps_used),fmtN(sections-mcps_used),fmtN(sections-mcps_used)],
+      ['MC Section-Credit Hours',fmtN(mc_sch),fmtN(mc_sch),fmtN(mc_sch)],
       ['FTF Required',fmtN(ftf1),'—',fmtN(ftf3)],
       ['PTF Required','—',fmtN(ptf2),fmtN(ptf3)],
     ]},
@@ -396,6 +421,157 @@ function calc(){
     }).join('');
     return header+rows;
   }).join('');
+
+  renderWaterfall(full_tot_rev,tot_rev,subsidy_discount,cost1,cost2,cost3,net1,net2,net3);
+  renderSensitivity(tot_rev,sections,credits,ftfl,ftf_cost_ea,ftf1,ptfl,ptf_cost_ea,ptf2);
+}
+
+function renderSensitivity(tot_rev,sections,credits,ftfl,ftf_cost_ea,ftf1,ptfl,ptf_cost_ea,ptf2){
+  var maxX=Math.max(ftf1,ptf2,sections);
+  var lbls=[],ftfD=[],ptfD=[],mcpsD=[];
+  for(var x=0;x<=maxX;x++){
+    lbls.push(x);
+    ftfD.push(Math.round(tot_rev-x*ftf_cost_ea));
+    ptfD.push(Math.round(tot_rev-x*ptf_cost_ea));
+    var mu=Math.min(x,sections);
+    var remSch=Math.max(0,(sections-mu)*credits);
+    var remPtf=remSch>0?Math.ceil(remSch/ptfl):0;
+    mcpsD.push(Math.round(tot_rev-remPtf*ptf_cost_ea));
+  }
+  var ftfR=ftfD.map(function(_,i){return i===ftf1?5:0;});
+  var ptfR=ptfD.map(function(_,i){return i===ptf2?5:0;});
+  var mcpsR=mcpsD.map(function(_,i){return i===sections?5:0;});
+
+  if(sensitivityChart){
+    sensitivityChart.data.labels=lbls;
+    sensitivityChart.data.datasets[0].data=ftfD;
+    sensitivityChart.data.datasets[0].pointRadius=ftfR;
+    sensitivityChart.data.datasets[1].data=ptfD;
+    sensitivityChart.data.datasets[1].pointRadius=ptfR;
+    sensitivityChart.data.datasets[2].data=mcpsD;
+    sensitivityChart.data.datasets[2].pointRadius=mcpsR;
+    sensitivityChart.update('none');
+    return;
+  }
+  var ctx2d=document.getElementById('sensitivity-chart').getContext('2d');
+  sensitivityChart=new Chart(ctx2d,{
+    type:'line',
+    data:{labels:lbls,datasets:[
+      {label:'FTF Instructors',data:ftfD,borderColor:'rgba(10,92,62,0.85)',borderWidth:2,pointRadius:ftfR,pointBackgroundColor:'rgba(10,92,62,0.85)',tension:0,fill:false},
+      {label:'PTF Instructors',data:ptfD,borderColor:'rgba(74,52,138,0.85)',borderWidth:2,pointRadius:ptfR,pointBackgroundColor:'rgba(74,52,138,0.85)',tension:0,fill:false},
+      {label:'MCPS Instructors',data:mcpsD,borderColor:'rgba(122,72,0,0.85)',borderWidth:2,borderDash:[5,3],pointRadius:mcpsR,pointBackgroundColor:'rgba(122,72,0,0.85)',tension:0,fill:false}
+    ]},
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      animation:{duration:400},
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:true,position:'bottom',labels:{font:{size:11,family:"'DM Sans',sans-serif"},color:'#6b6860',boxWidth:16,padding:16}},
+        tooltip:{callbacks:{
+          title:function(items){return 'Instructors: '+items[0].label;},
+          label:function(ctx){var v=ctx.parsed.y;return ctx.dataset.label+': '+(v<0?'−':'')+'$'+Math.abs(Math.round(v)).toLocaleString('en-US');}
+        }}
+      },
+      scales:{
+        x:{
+          title:{display:true,text:'Number of Instructors',font:{size:11,family:"'DM Sans',sans-serif"},color:'#9e9b96'},
+          grid:{color:'rgba(0,0,0,0.04)'},border:{display:false},
+          ticks:{maxTicksLimit:12,font:{size:11,family:"'DM Sans',sans-serif"},color:'#6b6860'}
+        },
+        y:{
+          grid:{color:'rgba(0,0,0,0.06)'},border:{display:false},
+          ticks:{font:{size:11,family:"'DM Mono',monospace"},color:'#6b6860',
+            callback:function(v){var a=Math.abs(v);var s=v<0?'−':'';if(a>=1000000)return s+'$'+(a/1000000).toFixed(1)+'M';if(a>=1000)return s+'$'+(a/1000).toFixed(0)+'k';return s+'$'+a;}
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderWaterfall(full_tot_rev,tot_rev,subsidy_discount,cost1,cost2,cost3,net1,net2,net3){
+  var labels=[
+    ['Full-Rate','Revenue'],
+    ['Tuition','Waiver'],
+    ['Net','Billed'],
+    ['FTF','Cost'],
+    ['PTF','Cost'],
+    ['Mixed','Cost'],
+    ['FTF','Net Rev.'],
+    ['PTF','Net Rev.'],
+    ['Mixed','Net Rev.']
+  ];
+  var data=[
+    [0,full_tot_rev],
+    [tot_rev,full_tot_rev],
+    [0,tot_rev],
+    [net1,tot_rev],
+    [net2,tot_rev],
+    [net3,tot_rev],
+    [Math.min(0,net1),Math.max(0,net1)],
+    [Math.min(0,net2),Math.max(0,net2)],
+    [Math.min(0,net3),Math.max(0,net3)]
+  ];
+  var cGray='#ccc9c0',cRed='rgba(139,32,32,0.65)',cAccent='rgba(81,35,127,0.72)';
+  var cFTF='rgba(10,92,62,0.8)',cPTF='rgba(74,52,138,0.8)',cMix='rgba(122,72,0,0.8)',cCost='rgba(139,32,32,0.45)';
+  var bg=[
+    cGray,cRed,cAccent,
+    cCost,cCost,cCost,
+    net1>=0?cFTF:cRed,
+    net2>=0?cPTF:cRed,
+    net3>=0?cMix:cRed
+  ];
+  var ttLabels=['Full-Rate Revenue','Tuition Waiver','Net Billed to MCPS','FTF Faculty Cost','PTF Faculty Cost','Mixed Faculty Cost','FTF Net Revenue','PTF Net Revenue','Mixed Net Revenue'];
+  wfTtValues=[full_tot_rev,-subsidy_discount,tot_rev,-cost1,-cost2,-cost3,net1,net2,net3];
+
+  if(waterfallChart){
+    waterfallChart.data.labels=labels;
+    waterfallChart.data.datasets[0].data=data;
+    waterfallChart.data.datasets[0].backgroundColor=bg;
+    waterfallChart.update('none');
+    return;
+  }
+  var ctx2d=document.getElementById('waterfall-chart').getContext('2d');
+  waterfallChart=new Chart(ctx2d,{
+    type:'bar',
+    data:{labels:labels,datasets:[{data:data,backgroundColor:bg,borderWidth:0,borderRadius:3,barPercentage:0.72,categoryPercentage:0.85}]},
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      animation:{duration:400},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          callbacks:{
+            title:function(items){return ttLabels[items[0].dataIndex];},
+            label:function(ctx){var v=wfTtValues[ctx.dataIndex];return(v<0?'−':'')+fmt$(Math.abs(v));}
+          }
+        }
+      },
+      scales:{
+        x:{
+          grid:{display:false},
+          border:{display:false},
+          ticks:{font:{size:11,family:"'DM Sans',sans-serif"},color:'#6b6860'}
+        },
+        y:{
+          grid:{color:'rgba(0,0,0,0.06)'},
+          border:{display:false},
+          ticks:{
+            font:{size:11,family:"'DM Mono',monospace"},
+            color:'#6b6860',
+            callback:function(v){
+              var a=Math.abs(v);
+              if(a>=1000000)return'$'+(v/1000000).toFixed(1)+'M';
+              if(a>=1000)return'$'+(v/1000).toFixed(0)+'k';
+              return'$'+v;
+            }
+          }
+        }
+      }
+    }
+  });
 }
 
 calc();
