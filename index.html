@@ -171,11 +171,15 @@
     padding: .5rem 0 0;
     font-family: var(--mono);
   }
+  @media (max-width: 1100px) {
+    #scenarios { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
   @media (max-width: 860px) {
     .layout { grid-template-columns: 1fr; }
     .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
     .grid4 { grid-template-columns: repeat(2, 1fr); }
     .grid3 { grid-template-columns: 1fr; }
+    #scenarios { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -189,14 +193,14 @@
 <div class="layout">
   <aside class="sidebar">
 
-    <div class="section-label">Enrollment parameters</div>
+    <div class="section-label">Enrollment Parameters</div>
     <div class="irow"><label>Total students enrolled</label><input type="number" id="s_students" min="1" max="99999" step="1" value="2500" style="width:90px;padding:4px 8px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-family:var(--mono);font-size:13px;background:var(--surface);color:var(--text)"><span class="ival" id="o_students" style="display:none">100</span></div>
     <div class="irow"><label>Avg credits per student</label><input type="range" id="s_credits" min="1" max="15" step="0.5" value="7"><span class="ival" id="o_credits">7.0</span></div>
     <div class="irow"><label>Avg class size</label><input type="range" id="s_classsize" min="5" max="40" step="1" value="16"><span class="ival" id="o_classsize">16</span></div>
     <div class="irow"><label>FTF % in mixed scenario</label><input type="range" id="s_ftfpct" min="0" max="100" step="5" value="50"><span class="ival" id="o_ftfpct">50%</span></div>
 
     <hr>
-    <div class="section-label">Tuition &amp; fee rates</div>
+    <div class="section-label">Tuition &amp; Fee Rates</div>
     <div class="irow"><label>Base tuition rate (per credit hr)</label><span class="ival">$138.00</span></div>
     <div class="irow"><label>Tuition subsidy %</label><input type="range" id="s_subsidy" min="0" max="100" step="1" value="75"><span class="ival" id="o_subsidy">75%</span></div>
     <div class="irow"><label style="color:var(--text)">Effective tuition rate</label><span class="ival" id="o_tuit" style="color:var(--accent)">$103.50</span></div>
@@ -209,14 +213,14 @@
     </div>
 
     <hr>
-    <div class="section-label">Faculty compensation</div>
+    <div class="section-label">Faculty Compensation</div>
     <div class="irow"><label>FTF rate (per credit hr)</label><input type="range" id="s_ftfr" min="1000" max="8000" step="50" value="3602"><span class="ival" id="o_ftfr">$3,602</span></div>
     <div class="irow"><label>FTF load (credit hrs/semester)</label><input type="range" id="s_ftfl" min="9" max="21" step="1" value="15"><span class="ival" id="o_ftfl">15</span></div>
     <div class="irow"><label>PTF rate (per credit hr)</label><input type="range" id="s_ptfr" min="500" max="5000" step="50" value="1745"><span class="ival" id="o_ptfr">$1,745</span></div>
     <div class="irow"><label>PTF max load (credit hrs/semester)</label><input type="range" id="s_ptfl" min="3" max="15" step="1" value="11"><span class="ival" id="o_ptfl">11</span></div>
 
     <hr>
-    <div class="section-label">Methodology notes</div>
+    <div class="section-label">Methodology Notes</div>
     <p style="font-size:12px;color:var(--muted);line-height:1.6">
       Sections = &lceil;students &divide; class&nbsp;size&rceil;. Section-credit hours (SCH) = sections &times; avg credits. Faculty needed = &lceil;SCH &divide; load&rceil;, rounded up. Consolidated fee applies the higher of the flat $50 or the % rate when credits &gt; 1.    </p>
 
@@ -226,13 +230,13 @@
 
     <div style="font-size:11px;color:var(--faint);font-family:var(--mono);margin-bottom:1rem" id="summary-bar"></div>
 
-    <div style="font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:.75rem">Revenue summary</div>
+    <div style="font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:.75rem">Revenue Summary</div>
     <div id="rev-metrics"></div>
 
-    <div style="font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:.75rem">Faculty cost scenarios</div>
+    <div style="font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:.75rem">Faculty Cost Scenarios</div>
     <div class="grid3" id="scenarios"></div>
 
-    <div style="font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:.75rem">Detail table</div>
+    <div style="font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:.75rem">Detail Table</div>
     <div class="card" style="overflow-x:auto"><table id="detail-table">
       <thead><tr><th>Item</th><th style="text-align:center">FTF only</th><th style="text-align:center">PTF only</th><th style="text-align:center">Mixed</th></tr></thead>
       <tbody id="detail-body"></tbody>
@@ -324,14 +328,14 @@ function calc(){
   ge('summary-bar').textContent=fmtN(students)+' students · '+credits.toFixed(1)+' avg credits · '+fmtN(sections)+' sections · '+fmtN(total_sch)+' section-credit hours';
 
   ge('rev-metrics').innerHTML=
-    '<div class="grid3" style="margin-bottom:10px">'
-    +metric('Tuition revenue (subsidized)',fmt$(tuit_ps*students),fmtd(tuit_ps)+'/student')
-    +metric('Consolidated fee',fmt$(cf_ps*students),fmtd(cf_ps)+'/student')
-    +metric('Facility / tech / trans',fmt$(ftt_ps*students),fmtd(ftt_ps)+'/student')
+    '<div class="grid2" style="margin-bottom:10px">'
+    +metric('Total Billed to MCPS (w/ Waiver)',fmt$(tot_rev),fmtd(rev_ps)+'/student')
+    +metric('Full-Rate Potential (w/o Waiver)',fmt$(full_tot_rev),'Subsidy Discount: '+fmt$(subsidy_discount))
     +'</div>'
-    +'<div class="grid2">'
-    +metric('Total billed to MCPS (w/ subsidy)',fmt$(tot_rev),fmtd(rev_ps)+'/student')
-    +metric('Full-rate potential (no subsidy)',fmt$(full_tot_rev),'Subsidy discount: '+fmt$(subsidy_discount))
+    +'<div class="grid3" style="margin-bottom:10px">'
+    +metric('Tuition Revenue (w/ Waiver)',fmt$(tuit_ps*students),fmtd(tuit_ps)+'/student')
+    +metric('Consolidated Fee',fmt$(cf_ps*students),fmtd(cf_ps)+'/student')
+    +metric('Facility / Tech / Trans',fmt$(ftt_ps*students),fmtd(ftt_ps)+'/student')
     +'</div>';
 
   function metric(label,val,sub){
@@ -398,4 +402,5 @@ calc();
 </script>
 </body>
 </html>
+
 
