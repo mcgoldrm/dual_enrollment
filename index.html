@@ -207,7 +207,9 @@
     <div class="irow"><label style="color:var(--text)">Effective tuition rate</label><span class="ival" id="o_tuit" style="color:var(--accent)">$103.50</span></div>
     <div class="irow"><label>Consolidated fee &mdash; 1 credit</label><input type="range" id="s_cf1" min="20" max="150" step="1" value="50"><span class="ival" id="o_cf1">$50</span></div>
     <div class="irow"><label>Consolidated fee &mdash; &gt;1 credit (%)</label><input type="range" id="s_cfp" min="5" max="40" step="1" value="20"><span class="ival" id="o_cfp">20%</span></div>
-    <div class="irow"><label>Facility/tech/trans (per credit hr)</label><input type="range" id="s_ftt" min="0" max="60" step="0.5" value="19"><span class="ival" id="o_ftt">$19.00</span></div>
+    <div class="irow"><label>Facilities (per credit hr)</label><input type="range" id="s_fac" min="0" max="30" step="0.5" value="7"><span class="ival" id="o_fac">$7.00</span></div>
+    <div class="irow"><label>Technology (per credit hr)</label><input type="range" id="s_tech" min="0" max="20" step="0.5" value="5"><span class="ival" id="o_tech">$5.00</span></div>
+    <div class="irow"><label>Transportation (per credit hr)</label><input type="range" id="s_trans" min="0" max="30" step="0.5" value="7"><span class="ival" id="o_trans">$7.00</span></div>
     <div style="border-top:1px solid var(--border);margin-top:.4rem;padding-top:.4rem">
       <div class="irow"><label style="color:var(--text);font-weight:500">Total per student</label><span class="ival" id="o_rev_ps" style="color:var(--accent)">—</span></div>
       <div class="irow" style="margin-bottom:0"><label style="font-size:11.5px">Tuition + fees breakdown</label><span id="o_rev_breakdown" style="font-size:11px;font-family:var(--mono);color:var(--muted);text-align:right;min-width:68px">—</span></div>
@@ -215,9 +217,9 @@
 
     <hr>
     <div class="section-label">Faculty Compensation</div>
-    <div class="irow"><label>FTF rate (per credit hr)</label><input type="range" id="s_ftfr" min="1000" max="8000" step="50" value="3602"><span class="ival" id="o_ftfr">$3,602</span></div>
+    <div class="irow"><label>FTF rate (per credit hr)</label><input type="number" id="s_ftfr" min="1" max="99999" step="1" value="3674" style="width:100px;padding:4px 8px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-family:var(--mono);font-size:13px;background:var(--surface);color:var(--text)"></div>
     <div class="irow"><label>FTF load (credit hrs/semester)</label><input type="range" id="s_ftfl" min="9" max="21" step="1" value="15"><span class="ival" id="o_ftfl">15</span></div>
-    <div class="irow"><label>PTF rate (per credit hr)</label><input type="range" id="s_ptfr" min="500" max="5000" step="50" value="1745"><span class="ival" id="o_ptfr">$1,745</span></div>
+    <div class="irow"><label>PTF rate (per credit hr)</label><input type="number" id="s_ptfr" min="1" max="99999" step="1" value="1793" style="width:100px;padding:4px 8px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-family:var(--mono);font-size:13px;background:var(--surface);color:var(--text)"></div>
     <div class="irow"><label>PTF max load (credit hrs/semester)</label><input type="range" id="s_ptfl" min="3" max="15" step="1" value="11"><span class="ival" id="o_ptfl">11</span></div>
 
     <hr>
@@ -280,11 +282,13 @@ var sliders=[
   ['s_subsidy','o_subsidy',function(v){return v+'%'}],
   ['s_cf1','o_cf1',function(v){return '$'+fmtN(v)}],
   ['s_cfp','o_cfp',function(v){return v+'%'}],
-  ['s_ftt','o_ftt',function(v){return fmtd(v)}],
+  ['s_fac','o_fac',function(v){return fmtd(v)}],
+  ['s_tech','o_tech',function(v){return fmtd(v)}],
+  ['s_trans','o_trans',function(v){return fmtd(v)}],
   ['s_mcps','o_mcps',function(v){return fmtN(v)}],
-  ['s_ftfr','o_ftfr',function(v){return fmt$(v)}],
+  ['s_ftfr',null,function(v){return fmt$(v)}],
   ['s_ftfl','o_ftfl',function(v){return fmtN(v)}],
-  ['s_ptfr','o_ptfr',function(v){return fmt$(v)}],
+  ['s_ptfr',null,function(v){return fmt$(v)}],
   ['s_ptfl','o_ptfl',function(v){return fmtN(v)}],
 ];
 
@@ -303,7 +307,7 @@ function calc(){
   ge('o_tuit').textContent=fmtd(tuit);
   var cf1=+ge('s_cf1').value;
   var cfp=+ge('s_cfp').value/100;
-  var ftt=+ge('s_ftt').value;
+  var ftt=+ge('s_fac').value+ +ge('s_tech').value+ +ge('s_trans').value;
   var ftfr=+ge('s_ftfr').value;
   var ftfl=+ge('s_ftfl').value;
   var ptfr=+ge('s_ptfr').value;
@@ -578,5 +582,3 @@ calc();
 </script>
 </body>
 </html>
-
-
