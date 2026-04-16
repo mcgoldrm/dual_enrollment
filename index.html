@@ -331,23 +331,28 @@ function calc(){
 
   var mcps_instr=+ge('s_mcps').value;
   var mcps_used=Math.min(mcps_instr,sections);
-  var mc_sch=Math.max(0,(sections-mcps_used)*credits);
+  var mc_sch=Math.max(0,(sections-mcps_used)*credits); // for display only
 
   var ftf_cost_ea=ftfr*ftfl;
   var ptf_cost_ea=ptfr*ptfl;
 
-  var ftf1=mc_sch>0?Math.ceil(mc_sch/ftfl):0;
+  // Base counts from full SCH, then subtract MCPS 1-for-1 per scenario
+  var ftf1_base=total_sch>0?Math.ceil(total_sch/ftfl):0;
+  var ftf1=Math.max(0,ftf1_base-mcps_used);
   var cost1=ftf1*ftf_cost_ea;
   var net1=tot_rev-cost1;
 
-  var ptf2=mc_sch>0?Math.ceil(mc_sch/ptfl):0;
+  var ptf2_base=total_sch>0?Math.ceil(total_sch/ptfl):0;
+  var ptf2=Math.max(0,ptf2_base-mcps_used);
   var cost2=ptf2*ptf_cost_ea;
   var net2=tot_rev-cost2;
 
-  var sch_f=mc_sch*ftfpct;
-  var sch_p=mc_sch*(1-ftfpct);
-  var ftf3=ftfpct>0?Math.ceil(sch_f/ftfl):0;
+  // Mixed: MCPS reduces FTF first, PTF unchanged
+  var sch_f=total_sch*ftfpct;
+  var sch_p=total_sch*(1-ftfpct);
+  var ftf3_base=ftfpct>0?Math.ceil(sch_f/ftfl):0;
   var ptf3=(1-ftfpct)>0?Math.ceil(sch_p/ptfl):0;
+  var ftf3=Math.max(0,ftf3_base-mcps_used);
   var cost3=ftf3*ftf_cost_ea+ptf3*ptf_cost_ea;
   var net3=tot_rev-cost3;
 
