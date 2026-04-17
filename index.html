@@ -330,7 +330,7 @@ function calc(){
   var total_sch=sections*credits;
 
   var mcps_instr=+ge('s_mcps').value;
-  var mcps_used=Math.min(mcps_instr,sections);
+  var mcps_used=Math.min(mcps_instr*2,sections);
   var mc_sch=Math.max(0,(sections-mcps_used)*credits);
 
   var ftf_cost_ea=ftfr*ftfl;
